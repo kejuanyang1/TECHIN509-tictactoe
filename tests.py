@@ -1,10 +1,10 @@
 import unittest
-import logic
+from logic import TicTacToeGame, HumanPlayer
 
-class TestLogic(unittest.TestCase):
+class TestTicTacToeGame(unittest.TestCase):
 
     def test_check_winner(self):        
-        boards = [
+        test_cases = [
             ([
                 ['X', None, 'O'],
                 [None, 'X', None],
@@ -27,12 +27,11 @@ class TestLogic(unittest.TestCase):
             ], None),
         ]
 
-        for board, expected_winner in boards:
-            with self.subTest(board=board):
-                self.assertEqual(logic.check_winner(board), expected_winner)
-
-
-
+        for board_state, expected_winner in test_cases:
+            with self.subTest(board_state=board_state):
+                game = TicTacToeGame(HumanPlayer('X'), HumanPlayer('O'))
+                game.board.board = board_state
+                self.assertEqual(game.check_winner(), expected_winner)
 
 if __name__ == '__main__':
     unittest.main()
