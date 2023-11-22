@@ -21,7 +21,10 @@ class GameBoard:
             self.board[row][col] = player
             return True
         return False
-
+    
+    def is_draw(self):
+        return all(all(cell is not None for cell in row) for row in self.board)
+    
     def display(self):
         for row in self.board:
             print([' ' if cell is None else cell for cell in row])
