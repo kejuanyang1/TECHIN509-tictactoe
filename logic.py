@@ -5,7 +5,6 @@
 import random
 import os
 import time
-import pandas as pd
 
 # GameBoard Class
 class GameBoard:
@@ -51,10 +50,12 @@ class HumanPlayer(Player):
 
 class BotPlayer(Player):
     def make_move(self, board):
-        row, col = random.randint(0, 2), random.randint(0, 2)
-        while not board.update_board(row, col, self.symbol):
-            row, col = random.randint(0, 2), random.randint(0, 2)
-        self.move = (row, col)
+        empty_cells = [(row, col) for row in range(3) for col in range(3) if board.board[row][col] is None]
+        if empty_cells:
+            row, col = random.choice(empty_cells)
+            board.update_board(row, col, self.symbol)
+            self.move = (row, col)
+
 
 # TicTacToeGame Class
 class TicTacToeGame:
@@ -64,6 +65,8 @@ class TicTacToeGame:
         self.current_player = 0
         self.start_time = None
         self.end_time = None
+        self.first_move = None
+        self.game_result = None
 
     def switch_player(self):
         self.current_player = 1 - self.current_player
@@ -91,43 +94,19 @@ class TicTacToeGame:
             self.board.display()
             print("Player", self.players[self.current_player].symbol, "take a turn!")
             self.players[self.current_player].make_move(self.board)
+
+            # Record the first move
+            if number_of_moves == 0:
+                self.first_move = self.players[self.current_player].move
+
             number_of_moves += 1
             game_sequence.append((self.players[self.current_player], self.players[self.current_player].move))
             winner = self.check_winner()
+            if winner:
+                self.game_result = 'Win' if winner == self.players[0].symbol else 'Lose'
+            elif self.board.is_draw():  # 检查平局
+                self.game_result = 'Draw'
+                break  # 平局时跳出循环
+
             if winner is None:
                 self.switch_player()
-        print(winner, "is the winner!")
-        self.end_time = time.time()
-        game_duration = self.end_time - self.start_time
-        self.log_game_result(winner, game_duration, number_of_moves, game_sequence)
-
-
-    def log_game_result(self, winner, game_duration, number_of_moves, game_sequence):
-        # Define log file path
-        log_file_path = 'logs/game_log.csv'
-
-        # Data to log
-        timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
-        loser = 'X' if winner == 'O' else 'O' if winner == 'X' else None
-        draw = winner is None
-
-        # Create a DataFrame for the new log entry
-        new_log_entry = pd.DataFrame({
-            'timestamp': [timestamp],
-            'winner': [winner],
-            'loser': [loser],
-            'draw': [draw],
-            'game_duration': [game_duration],
-            'number_of_moves': [number_of_moves],
-            'game_sequence': [game_sequence]
-        })
-
-        # Check if the log file exists and append the new data
-        if os.path.exists(log_file_path):
-            df = pd.read_csv(log_file_path)
-            df = df.append(new_log_entry, ignore_index=True)
-        else:
-            df = new_log_entry
-
-        # Save the updated DataFrame to the log file
-        df.to_csv(log_file_path, index=False)
